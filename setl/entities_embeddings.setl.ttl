@@ -1,0 +1,158 @@
+@prefix rdf:           <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:          <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:           <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl:           <http://www.w3.org/2002/07/owl#> .
+@prefix skos:          <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov:          <http://www.w3.org/ns/prov#> .
+@prefix sio:           <http://semanticscience.org/resource/> .
+@prefix dcat:          <http://www.w3.org/ns/dcat#> .
+@prefix dcterms:       <http://purl.org/dc/terms/> .
+@prefix void:          <http://rdfs.org/ns/void#> .
+@prefix foaf:          <http://xmlns.com/foaf/0.1/> .
+@prefix ov:            <http://open.vocab.org/terms/> .
+@prefix setl:          <http://purl.org/twc/vocab/setl/> .
+@prefix csvw:          <http://www.w3.org/ns/csvw#> .
+@prefix pv:            <http://purl.org/net/provenance/ns#>.
+@prefix sp:            <http://spinrdf.org/sp#>.
+@prefix dc:               <http://purl.org/dc/elements/1.1/>.
+@prefix api_vocab: <http://purl.org/linked-data/api/vocab#>.
+
+@prefix :              <http://purl.org/whyis/wikidata/setl/> .
+
+@prefix nanopub: <http://www.nanopub.org/nschema#> .
+
+:entities_all a setl:JSON, setl:GZipFile;
+  api_vocab:selector "item";
+  prov:wasGeneratedBy [
+    a setl:Extract;
+    prov:used <https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.json.gz>;
+  ].
+
+:wikidata_labels_import a setl:SemanticETLScript;
+  rdfs:label "Nanomine MDCS Import SETL Script".
+
+:wikidata_labels a void:Dataset;
+  prov:wasGeneratedBy :wikidata_labels_import, [
+    a setl:Transform, setl:JSLDT;
+    prov:used :entities_all;
+    prov:qualifiedUsage [ a prov:Usage; prov:entity :embed; prov:hadRole [ dcterms:identifier "embed"]];
+    setl:hasContext '''{
+    "@base" : "http://nanomine.org/",
+    "wd" : "http://wikidata.org/entity/",
+    "schema": "http://schema.org/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "whyis": "http://vocab.rpi.edu/whyis/",
+    "np": "http://www.nanopub.org/nschema#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "sio": "http://semanticscience.org/resource/",
+    "dc": "http://purl.org/dc/terms/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "mt" : "https://www.iana.org/assignments/media-types/"
+}''';
+    prov:value """[
+  {
+    "@id": "pub/wikidata_labels_assertion",
+    "@graph" : [
+      {
+        "@id" : "wd:{{row['id']}}",
+        "rdfs:label" : [
+          {
+            "@for" : "label in row['labels'].values()",
+            "@do" : [
+              {
+                "@if" : "label['value'] is not None",
+                "@value" : "{{label['value']}}",
+                "@language" : "{{label['language']}}"
+              }
+            ]
+          }
+        ],
+        "skos:prefLabel" : [
+          {
+            "@for" : "label in row['labels'].values()",
+            "@do" : [
+              {
+                "@if" : "label['value'] is not None",
+                "@value" : "{{label['value']}}",
+                "@language" : "{{label['language']}}"
+              }
+            ]
+          }
+        ],
+        "dc:description" : [
+          {
+            "@for" : "description in row['descriptions'].values()",
+            "@do" : [
+              {
+                "@if" : "description['value'] is not None",
+                "@value" : "{{description['value']}}",
+                "@language" : "{{description['language']}}"
+              }
+            ]
+          }
+        ],
+        "skos:altLabel" : [
+          {
+            "@for" : "lang in row['aliases'].values()",
+            "@do" : [
+              {
+                "@for" : "label in lang",
+                "@do" : [
+                  {
+                    "@if" : "label['value'] is not None",
+                    "@value" : "{{label['value']}}",
+                    "@language" : "{{label['language']}}"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "rdfs:subClassOf": [
+          {
+            "@for" : "class in row['claims'].get('P279', [])",
+            "@do" : [
+              {
+                "@id" : "wd:{{class['mainsnak']['datavalue']['value']['id']}}",
+                "@type" : "owl:Class"
+              }
+            ]
+          }
+        ],
+        "skos:exactMatch" : [
+          {
+            "@for" : "class in row['claims'].get('P2888', [])",
+            "@do" : [
+              {
+                "@id" : "{{class['mainsnak']['datavalue']['value']}}"
+              }
+            ]
+          }
+        ],
+        "rdf:type" : [
+          {
+            "@if" : "'P279' in row['claims']",
+            "@id" : "owl:Class"
+          },
+          {
+            "@for" : "class in row['claims'].get('P31', [])",
+            "@do" : [
+              {
+                "@id" : "wd:{{class['mainsnak']['datavalue']['value']['id']}}",
+                "@type" : "owl:Class"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]"""
+].
+
+<wikidata_labels_embeddings.trig> a pv:File;
+  dcterms:format "application/trig";
+  prov:wasGeneratedBy [
+    a setl:Load;
+    prov:used :wikidata_labels ;
+  ].
